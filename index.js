@@ -1,27 +1,21 @@
 #!/usr/bin/env node
-// ref. parse-server/index.js
-// ref. parse-server/bin/parse-server
 
 var express = require('express');
 var ParseServer = require('parse-server').ParseServer;
 var links = require('docker-links').parseLinks(process.env);
 var fs = require('fs');
-var AzureStorageAdapter = require('parse-server-azure-storage').AzureStorageAdapter;
 
 var databaseUri = process.env.DATABASE_URI || process.env.MONGODB_URI
-
 if (!databaseUri) {
     if (links.mongo) {
         databaseUri = 'mongodb://' + links.mongo.hostname + ':' + links.mongo.port + '/dev';
     }
 }
-
 if (!databaseUri) {
     console.log('DATABASE_URI not specified, falling back to localhost.');
 }
 
 var facebookAppIds = process.env.FACEBOOK_APP_IDS;
-
 if (facebookAppIds) {
     facebookAppIds = facebookAppIds.split(",");
 }
@@ -110,7 +104,6 @@ if (gcmId && gcmKey) {
 }
 if (iosPushConfigs.length > 0) {
     pushConfig.ios = iosPushConfigs;
-    //console.log('Multiple iOS push configurations.')
 }
 console.log(pushConfig);
 
@@ -121,7 +114,6 @@ var serverURL = process.env.SERVER_URL || 'http://localhost:' + port + mountPath
 
 var S3Adapter = require('parse-server').S3Adapter;
 var GCSAdapter = require('parse-server').GCSAdapter;
-//var FileSystemAdapter = require('parse-server').FileSystemAdapter;
 var filesAdapter;
 
 if (process.env.S3_ACCESS_KEY &&
@@ -204,10 +196,9 @@ if (process.env.DATABASE_TIMEOUT) {
 var api = new ParseServer({
     databaseURI: databaseUri || 'mongodb://localhost:27017/dev',
     databaseOptions: databaseOptions,
-    cloud: process.env.CLOUD_CODE_MAIN || __dirname + '/cloud/main.js',
 
     appId: process.env.APP_ID || 'myAppId',
-    masterKey: process.env.MASTER_KEY, //Add your master key here. Keep it secret!
+    masterKey: process.env.MASTER_KEY, 
     serverURL: serverURL,
 
     collectionPrefix: process.env.COLLECTION_PREFIX,
@@ -225,24 +216,10 @@ var api = new ParseServer({
     emailAdapter: emailAdapter,
     enableAnonymousUsers: enableAnonymousUsers,
     allowClientClassCreation: allowClientClassCreation,
-    //oauth = {},
     appName: process.env.APP_NAME,
     publicServerURL: process.env.PUBLIC_SERVER_URL,
     liveQuery: liveQueryParam
-    //customPages: process.env.CUSTOM_PAGES || // {
-    //invalidLink: undefined,
-    //verifyEmailSuccess: undefined,
-    //choosePassword: undefined,
-    //passwordResetSuccess: undefined
-    //}
 });
-
-//console.log("appId: " + api.appId);
-//console.log("masterKey: " + api.masterKey);
-//console.log("cloud: " + api.cloud);
-//console.log("databaseURI: " + api.databaseURI);
-console.log("appId: " + process.env.APP_ID);
-console.log("masterKey: " + process.env.MASTER_KEY);
 
 var app = express();
 
@@ -254,18 +231,14 @@ if (trustProxy) {
 
 app.use(mountPath, api);
 
-// Parse Server plays nicely with the rest of your web routes
 app.get('/', function(req, res) {
-    res.status(200).send('I dream of being a web site.');
+    res.status(444).send('No comments.');
 });
-
-
 
 if(liveQuery) {
   console.log("Starting live query server");
   var httpServer = require('http').createServer(app);
   httpServer.listen(port);
-  console.log('plac');
   var parseLiveQueryServer = ParseServer.createLiveQueryServer(httpServer);
 } else {
   app.listen(port, function() {
